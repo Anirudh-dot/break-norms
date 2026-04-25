@@ -6,7 +6,6 @@ const GEMMA_MODEL = process.env.GEMMA_MODEL || "gemma-4-31b-it";
 function cleanReply(text: string) {
   let reply = text.trim();
 
-  // Try to extract JSON reply first
   try {
     const parsed = JSON.parse(reply);
     if (parsed.reply && typeof parsed.reply === "string") {
@@ -16,13 +15,11 @@ function cleanReply(text: string) {
     // Continue to fallback cleanup
   }
 
-  // If model includes a final quoted answer at the end, grab it
   const quotedMatches = [...reply.matchAll(/"([^"]+)"/g)];
   if (quotedMatches.length > 0) {
     reply = quotedMatches[quotedMatches.length - 1][1];
   }
 
-  // Remove common unwanted reasoning labels
   reply = reply
     .replace(/User input:.*?\n?/gi, "")
     .replace(/User says:.*?\n?/gi, "")
@@ -51,7 +48,7 @@ export async function POST(request: NextRequest) {
   if (!GOOGLE_API_KEY) {
     return NextResponse.json(
       { error: "Missing GOOGLE_API_KEY in .env.local" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -59,23 +56,37 @@ export async function POST(request: NextRequest) {
     const {
       message,
       speedLevel = 0,
+      qualityLevel = 10,
+      mood = "Calm",
     }: {
       message?: string;
       speedLevel?: number;
+      qualityLevel?: number;
+      mood?: string;
     } = await request.json();
 
     if (!message || !message.trim()) {
       return NextResponse.json(
         { error: "Message is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const fastMode = speedLevel >= 3;
     const ultraFastMode = speedLevel >= 6;
+    const burnoutMode = speedLevel >= 9;
+
+    const behaviorInstruction = burnoutMode
+      ? "You are burned out. Reply very briefly and bluntly, but still answer the user."
+      : ultraFastMode
+        ? "You are in ultra-fast mode. Reply in 1-2 short sentences."
+        : fastMode
+          ? "You are in fast mode. Reply briefly but still be useful."
+          : "You are in normal mode. Give a clear and helpful answer.";
 
     const prompt = `
-You are a chatbot.
+    
+You are Norm, a helpful chatbot.
 
 Return valid JSON only.
 Do not include markdown.
@@ -86,6 +97,14 @@ Do not include explanations outside the JSON.
 
 The JSON must use this exact format:
 {"reply":"your response here"}
+
+Assistant state:
+Speed level: ${speedLevel}/10
+Quality level: ${qualityLevel}/10
+Mood: ${mood}
+
+Behavior:
+${behaviorInstruction}
 
 User message:
 ${message}
@@ -98,15 +117,29 @@ ${message}
       headers: {
         "Content-Type": "application/json",
       },
+
       body: JSON.stringify({
         contents: [
           {
             parts: [{ text: prompt }],
           },
         ],
+
         generationConfig: {
-          temperature: ultraFastMode ? 0.1 : fastMode ? 0.3 : 0.5,
-          maxOutputTokens: ultraFastMode ? 60 : fastMode ? 150 : 350,
+          temperature: burnoutMode
+            ? 0.2
+            : ultraFastMode
+              ? 0.2
+              : fastMode
+                ? 0.4
+                : 0.6,
+          maxOutputTokens: burnoutMode
+            ? 60
+            : ultraFastMode
+              ? 100
+              : fastMode
+                ? 180
+                : 350,
         },
       }),
     });
@@ -119,7 +152,7 @@ ${message}
           error: `Google API error: ${response.statusText}`,
           details: body,
         },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -131,7 +164,15 @@ ${message}
     return NextResponse.json({
       reply,
       speedLevel,
-      mode: ultraFastMode ? "ultra-fast" : fastMode ? "fast" : "normal",
+      qualityLevel,
+      mood,
+      mode: burnoutMode
+        ? "burnout"
+        : ultraFastMode
+          ? "ultra-fast"
+          : fastMode
+            ? "fast"
+            : "normal",
     });
   } catch (error) {
     console.error("[Chat API] Error:", error);
@@ -141,7 +182,7 @@ ${message}
         error: "Failed to get response from Google Gemma model",
         details: String(error),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
