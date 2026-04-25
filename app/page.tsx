@@ -120,8 +120,12 @@ export default function Home() {
       const data = await response.json();
 
       if (!response.ok || data.error) {
-        throw new Error(data.error || `HTTP error! status: ${response.status}`);
-      }
+  console.error("API error response:", data);
+
+  throw new Error(
+    data.details || data.error || `HTTP error! status: ${response.status}`
+  );
+}
 
       const finalBotMessage: Message = {
         id: botMessageId,

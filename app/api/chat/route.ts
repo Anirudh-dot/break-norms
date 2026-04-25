@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 const GEMMA_MODEL = process.env.GEMMA_MODEL || "gemma-4-31b-it";
 
+
+
 function cleanReply(text: string) {
   let reply = text.trim();
 
@@ -111,7 +113,7 @@ ${message}
 `;
 
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMMA_MODEL}:generateContent?key=${GOOGLE_API_KEY}`;
-
+    
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
@@ -146,7 +148,6 @@ ${message}
 
     if (!response.ok) {
       const body = await response.text();
-
       return NextResponse.json(
         {
           error: `Google API error: ${response.statusText}`,
