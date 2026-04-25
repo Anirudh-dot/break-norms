@@ -74,7 +74,7 @@ export default function Home() {
           msg.id === botMessageId
             ? {
                 ...msg,
-                text: "Sorry, I couldn't get a response. Make sure LM Studio is running with the model loaded.",
+                text: "Sorry, I couldn't get a response. Make sure your Google API key and model configuration are correct.",
               }
             : msg,
         ),
@@ -95,7 +95,7 @@ export default function Home() {
     <div className="flex flex-col h-screen bg-gray-100">
       <header className="bg-white shadow p-4">
         <h1 className="text-xl font-bold text-gray-900">
-          Chatbot with Gemma-4-31B
+          Chatbot with Google Gemma-4
         </h1>
       </header>
       <div className="flex-1 overflow-y-auto p-4">
