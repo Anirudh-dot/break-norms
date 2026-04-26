@@ -3,7 +3,17 @@ import { NextRequest, NextResponse } from "next/server";
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 const GEMMA_MODEL = process.env.GEMMA_MODEL || "gemma-4-31b-it";
 
-
+function sanitizeUserInput(input: string) {
+  return input
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/javascript:/gi, "")
+    .replace(/on\w+="[^"]*"/gi, "")
+    .replace(/on\w+='[^']*'/gi, "")
+    .replace(/[{}]/g, "")
+    .trim()
+    .slice(0, 1000);
+}
 
 function cleanReply(text: string) {
   let reply = text.trim();
@@ -67,7 +77,9 @@ export async function POST(request: NextRequest) {
       mood?: string;
     } = await request.json();
 
-    if (!message || !message.trim()) {
+    const sanitizedMessage = sanitizeUserInput(message || "");
+
+    if (!sanitizedMessage) {
       return NextResponse.json(
         { error: "Message is required" },
         { status: 400 },
@@ -79,12 +91,12 @@ export async function POST(request: NextRequest) {
     const burnoutMode = speedLevel >= 9;
 
     const behaviorInstruction = burnoutMode
-      ? "You are burned out. Reply very briefly and bluntly, but still answer the user."
+      ? "You are burned out, but you must still answer. Reply in one very short useful sentence."
       : ultraFastMode
-        ? "You are in ultra-fast mode. Reply in 1-2 short sentences."
+        ? "You are in ultra-fast mode. Reply in one short useful sentence."
         : fastMode
-          ? "You are in fast mode. Reply briefly but still be useful."
-          : "You are in normal mode. Give a clear and helpful answer.";
+          ? "You are in fast mode. Reply in 2-3 concise sentences."
+          : "You are in normal mode. Give a clear, helpful answer with enough detail.";
 
     const prompt = `
     
@@ -96,6 +108,7 @@ Do not include reasoning.
 Do not include analysis.
 Do not include constraints.
 Do not include explanations outside the JSON.
+Do not reply with only "...", ".", punctuation, or silence.
 
 The JSON must use this exact format:
 {"reply":"your response here"}
@@ -109,11 +122,11 @@ Behavior:
 ${behaviorInstruction}
 
 User message:
-${message}
+${sanitizedMessage}
 `;
 
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMMA_MODEL}:generateContent?key=${GOOGLE_API_KEY}`;
-    
+
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
@@ -136,12 +149,12 @@ ${message}
                 ? 0.4
                 : 0.6,
           maxOutputTokens: burnoutMode
-            ? 60
+            ? 40
             : ultraFastMode
-              ? 100
+              ? 80
               : fastMode
-                ? 180
-                : 350,
+                ? 160
+                : 500,
         },
       }),
     });

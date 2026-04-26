@@ -75,18 +75,40 @@ export default function Home() {
     setMessages((prev) => [...prev, resetMessage]);
   };
 
+  const getThinkingDelay = () => {
+    if (speedLevel >= 9) return 150;
+    if (speedLevel >= 7) return 300;
+    if (speedLevel >= 4) return 700;
+    if (speedLevel >= 1) return 1200;
+    return 2000;
+  };
+
+  const wait = (ms: number) => {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  };
+
+  const sanitizeInput = (value: string) => {
+    return value
+      .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
+      .replace(/<[^>]*>/g, "")
+      .trim()
+      .slice(0, 1000);
+  };
+
   const sendMessage = async () => {
-    if (!input.trim()) return;
+
+    const sanitizedInput = sanitizeInput(input);
+    if (!sanitizedInput) return;
 
     const userMessage: Message = {
       id: Date.now() + Math.random(),
-      text: input,
+      text: sanitizedInput,
       sender: "user",
     };
 
     setMessages((prev) => [...prev, userMessage]);
 
-    const currentInput = input;
+    const currentInput = sanitizedInput;
 
     setInput("");
     setLoading(true);
@@ -95,7 +117,14 @@ export default function Home() {
 
     const botMessage: Message = {
       id: botMessageId,
-      text: "Thinking...",
+      text:
+        speedLevel >= 9
+          ? "Rushing..."
+          : speedLevel >= 7
+            ? "Thinking fast..."
+            : speedLevel >= 4
+              ? "Thinking quickly..."
+              : "Thinking carefully...",
       sender: "bot",
     };
 
@@ -120,12 +149,16 @@ export default function Home() {
       const data = await response.json();
 
       if (!response.ok || data.error) {
-  console.error("API error response:", data);
+        console.error("API error response:", data);
 
-  throw new Error(
-    data.details || data.error || `HTTP error! status: ${response.status}`
-  );
-}
+        throw new Error(
+          data.details ||
+            data.error ||
+            `HTTP error! status: ${response.status}`,
+        );
+      }
+
+      await wait(getThinkingDelay());
 
       const finalBotMessage: Message = {
         id: botMessageId,
@@ -134,7 +167,7 @@ export default function Home() {
       };
 
       setMessages((prev) =>
-        prev.map((msg) => (msg.id === botMessageId ? finalBotMessage : msg))
+        prev.map((msg) => (msg.id === botMessageId ? finalBotMessage : msg)),
       );
     } catch (error) {
       console.error("Error sending message:", error);
@@ -146,8 +179,8 @@ export default function Home() {
                 ...msg,
                 text: "Sorry, I couldn't get a response. Check your API key and model settings.",
               }
-            : msg
-        )
+            : msg,
+        ),
       );
     } finally {
       setLoading(false);
@@ -170,9 +203,7 @@ export default function Home() {
       <header className="bg-white shadow p-4">
         <div className="max-w-4xl mx-auto flex flex-col gap-4">
           <div className="flex items-center justify-between gap-4">
-            <h1 className="text-xl font-bold text-gray-900">
-              Chat with Norm
-            </h1>
+            <h1 className="text-xl font-bold text-gray-900">Chat with Norm</h1>
 
             <div className="flex items-center gap-3">
               <div
@@ -230,8 +261,7 @@ export default function Home() {
 
             <div className="flex items-center justify-start md:justify-end">
               <p className="text-sm text-gray-700">
-                Mood:{" "}
-                <span className={`font-bold ${moodColor}`}>{mood}</span>
+                Mood: <span className={`font-bold ${moodColor}`}>{mood}</span>
               </p>
             </div>
           </div>
