@@ -1,36 +1,132 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Break Norm
 
-## Getting Started
+This is **Break Norm**! A web app developed with **Next.js** where you can bonk a chatbot named **Norm** on the head to make him run faster. Just be careful though: enough bonks and he might become more angry, rushed, and burned out.
 
-First, run the development server:
+The project was created around the theme **“Break the Norm”** by taking a normal AI chatbot and turning it into something more playful and reactive. Instead of being a calm assistant all the time, Norm responds to how the user treats him.
+
+## Features
+
+* Chat with Norm, an AI-powered chatbot
+* Bonk Norm with a virtual baseball bat
+* Rapid bonks increase Norm’s pressure level
+* Higher pressure makes Norm respond faster
+* Answer quality goes down as pressure increases
+* Norm’s mood changes based on pressure
+* Animated face that reacts to mood
+* Blinking eyes and animated mouth while thinking
+* Burnout mode when Norm is pushed too far
+* Reset button to restore Norm back to normal
+
+## How It Works
+
+Norm has a pressure system. A single bonk mostly just plays the animation, but repeated bonks close together raise the pressure level.
+
+As pressure increases:
+
+```txt
+Pressure goes up
+Answer speed goes up
+Answer quality goes down
+Mood gets worse
+```
+
+This creates a tradeoff between speed and quality. The user can force Norm to respond faster, but the responses become shorter and less thoughtful.
+
+## Mood System
+
+Norm’s mood changes depending on the pressure level:
+
+```txt
+0 pressure      Calm
+1-3 pressure    Slightly Pressured
+4-6 pressure    Annoyed
+7-8 pressure    Overworked
+9-10 pressure   Burned Out
+```
+
+Norm’s face and the page styling change based on the current mood.
+
+## Tech Stack
+
+* Next.js
+* React
+* TypeScript
+* Tailwind CSS
+* Google Gemini/Gemma API
+
+## Setting Up the Project
+
+Install all necessary dependencies:
+
+```bash
+npm install
+```
+
+Create a `.env.local` file in the project root:
+
+```env
+GOOGLE_API_KEY=your_api_key_here
+GEMMA_MODEL=your_model_name_here
+```
+
+Example:
+
+```env
+GOOGLE_API_KEY=your_api_key_here
+GEMMA_MODEL=your_gemma_model_here
+```
+
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```txt
+break-norms
+├── app
+│   ├── api
+│   │   └── chat
+│   │       └── route.ts
+│   ├── components
+│   │   ├── Bat.tsx
+│   │   └── NormFace.tsx
+│   ├── page.tsx
+│   └── globals.css
+├── public
+│   └── bat.png
+├── .env.local
+├── package.json
+└── README.md
+```
 
-## Learn More
+## Important Files
 
-To learn more about Next.js, take a look at the following resources:
+### `app/page.tsx`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Contains the main chatbot UI, message state, bonk logic, pressure system, mood system, and speed/quality meters.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### `app/components/NormFace.tsx`
 
-## Deploy on Vercel
+Contains Norm’s animated face. The face changes depending on mood and animates while the chatbot is loading.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### `app/components/Bat.tsx`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Contains the baseball bat component used to bonk Norm.
+
+### `app/api/chat/route.ts`
+
+Handles the chatbot API request. It sends the user’s message, pressure level, quality level, and mood to the AI model.
+
+## Troubleshooting
+
+If the chatbot does not respond, check if:
+
+* The API key is correct
+* `.env.local` is in the project root
+* The model name is available for your API key
+* The development server was restarted after changing `.env.local`
