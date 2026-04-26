@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 
+import NormFace from "./components/normface";
+import Bat from "./components/bat";
+
 interface Message {
   id: number;
   text: string;
@@ -96,7 +99,6 @@ export default function Home() {
   };
 
   const sendMessage = async () => {
-
     const sanitizedInput = sanitizeInput(input);
     if (!sanitizedInput) return;
 
@@ -206,14 +208,6 @@ export default function Home() {
             <h1 className="text-xl font-bold text-gray-900">Chat with Norm</h1>
 
             <div className="flex items-center gap-3">
-              <div
-                className={`text-3xl transition-transform duration-200 ${
-                  batSwinging ? "rotate-45 scale-125" : "-rotate-12"
-                }`}
-              >
-                🏏
-              </div>
-
               <button
                 onClick={hitWithBat}
                 className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
@@ -230,10 +224,10 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
             <div>
               <div className="flex justify-between text-sm text-gray-700 mb-1">
-                <span>Speed</span>
+                <span>Pressure</span>
                 <span>{speedLevel}/10</span>
               </div>
 
@@ -259,10 +253,17 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="flex items-center justify-start md:justify-end">
-              <p className="text-sm text-gray-700">
-                Mood: <span className={`font-bold ${moodColor}`}>{mood}</span>
-              </p>
+            <div className="md:col-span-2 flex justify-start md:justify-end">
+              <div className="relative flex items-center justify-center min-w-[260px]">
+                <Bat swinging={batSwinging} />
+                <div
+                  className={`transition-transform duration-150 ${
+                    batSwinging ? "translate-x-2 rotate-2 scale-95" : ""
+                  }`}
+                >
+                  <NormFace mood={mood} loading={loading} />
+                </div>
+              </div>
             </div>
           </div>
 
